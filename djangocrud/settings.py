@@ -75,6 +75,13 @@ WSGI_APPLICATION = 'djangocrud.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-akmlw)!d+3pedqpldf(+^f94xv)y6-arma$++*yvsertvil&mc')
+
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
+
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost').split(',')
+
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',

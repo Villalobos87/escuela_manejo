@@ -3,6 +3,7 @@ from django.conf.urls.static import static
 from django.urls import path
 from django.shortcuts import render
 from .views import list_tasks, create_task, delete_task, edit_task, update_task, api_clases
+from .views import reporte_horario_siguiente
 
 urlpatterns=[
     path('', list_tasks, name='list_tasks'),
@@ -12,6 +13,7 @@ urlpatterns=[
      path('update/<int:task_id>/', update_task, name='update_task'),
     path('calendario/', lambda request: render(request, 'calendario_full.html'), name='calendario_clases'),
     path('api/clases/', api_clases, name='api_clases'),
+    path('reporte/horarios/', reporte_horario_siguiente, name='reporte_horarios'),
 
 ]
 

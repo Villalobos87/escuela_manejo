@@ -1,9 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Task
-from datetime import time
+from datetime import time, timedelta, datetime
 from django.contrib import messages
 from .models import Task, Instructor
 from django.http import JsonResponse
+from django.db.models import Q
 
 def list_tasks(request):
     tasks = Task.objects.all().order_by('-id')
@@ -133,3 +134,47 @@ def api_clases(request):
         })
 
     return JsonResponse(eventos, safe=False)
+
+def reporte_horario_siguiente(request):
+    ultima_tarea = Task.objects.order_by('-fecha_fin').first()
+    if not ultima_tarea:
+        return render(request, 'reporte_horarios.html', {'error': 'No hay tareas registradas.'})
+
+    # 1. Fecha objetivo (día siguiente a la última fecha_fin, sin sábados ni domingos)
+    fecha_objetivo = ultima_tarea.fecha_fin + timedelta(days=1)
+    while fecha_objetivo.weekday() in [5, 6]:
+        fecha_objetivo += timedelta(days=1)
+
+    # 2. Horarios posibles
+    hora_inicio = datetime.strptime("07:30", "%H:%M")
+    hora_fin = datetime.strptime("17:30", "%H:%M")
+    intervalo = timedelta(hours=1, minutes=30)
+
+    horas_posibles = []
+    hora_actual = hora_inicio
+    while hora_actual <= hora_fin:
+        if hora_actual.time() != time(12, 0):
+            horas_posibles.append(hora_actual.time())
+        hora_actual += intervalo
+
+    # 3. Obtener tareas que estén activas ese día
+    tareas_activas = Task.objects.filter(
+        Q(fecha_inicio__lte=fecha_objetivo) & Q(fecha_fin__gte=fecha_objetivo)
+    )
+
+    # 4. Horas ocupadas en esa fecha
+    horas_ocupadas = set()
+    for tarea in tareas_activas:
+        if tarea.hora:
+            horas_ocupadas.add(tarea.hora)
+
+    # 5. Filtrar horas libres
+    horas_libres = [h for h in horas_posibles if h not in horas_ocupadas]
+
+    reporte = [{
+        'fecha': fecha_objetivo.strftime('%Y-%m-%d'),
+        'hora': h.strftime('%H:%M'),
+        'estado': 'Libre'
+    } for h in horas_libres]
+
+    return render(request, 'reporte_horarios.html', {'reporte': reporte})

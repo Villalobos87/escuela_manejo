@@ -2,20 +2,20 @@ from django.shortcuts import render, redirect, get_object_or_404
 from .models import Task
 from datetime import time, timedelta, datetime
 from django.contrib import messages
-from .models import Task, Instructor
+#from .models import Task, Instructor
 from django.http import JsonResponse
 from django.db.models import Q
 
 def list_tasks(request):
     tasks = Task.objects.all().order_by('-id')
-    instructores = Instructor.objects.all()
+    #instructores = Instructor.objects.all()
     return render(request, 'list_tasks.html', {
         'tasks': tasks,
-        'instructores': instructores
+      #  'instructores': instructores
     })
 
 def create_task(request):
-    instructores = Instructor.objects.all()
+   # instructores = Instructor.objects.all()
 
     if request.method == 'POST':
         form_data = request.POST

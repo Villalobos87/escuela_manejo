@@ -17,9 +17,15 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.shortcuts import redirect
+from django.http import HttpResponse
+from django.conf import settings
+
+def check_debug(request):
+    return HttpResponse(f"DEBUG is {settings.DEBUG}")
 
 urlpatterns = [
+    path('check_debug/', check_debug),  # <-- nueva ruta para chequear DEBUG
     path('', lambda request: redirect('/tasks/')),
     path('admin/', admin.site.urls),
-    path('tasks/', include('tasks.urls'))
+    path('tasks/', include('tasks.urls')),
 ]

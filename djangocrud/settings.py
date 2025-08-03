@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
-
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -78,20 +78,19 @@ WSGI_APPLICATION = 'djangocrud.wsgi.application'
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-akmlw)!d+3pedqpldf(+^f94xv)y6-arma$++*yvsertvil&mc')
 
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost,escuela-manejo.onrender.com').split(',')
 
+
+import dj_database_url
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'tasksdb',
-        'USER': 'postgres',
-        'PASSWORD': '12345678*Jmvp',
-        'HOST': 'localhost',
-        'PORT':'5432',
-    }
+    'default': dj_database_url.config(
+        default=os.getenv('DATABASE_URL'),
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
 
 

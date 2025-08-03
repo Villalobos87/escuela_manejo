@@ -17,9 +17,13 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.shortcuts import redirect
+from django.http import HttpResponse
+
+def home(request):
+    return HttpResponse("Página de prueba OK")
 
 urlpatterns = [
-    path('', lambda request: redirect('/tasks/')),
+    path('', home),  
     path('admin/', admin.site.urls),
     path('tasks/', include('tasks.urls'))
 ]

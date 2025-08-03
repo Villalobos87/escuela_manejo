@@ -78,7 +78,7 @@ WSGI_APPLICATION = 'djangocrud.wsgi.application'
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-akmlw)!d+3pedqpldf(+^f94xv)y6-arma$++*yvsertvil&mc')
 
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
+DEBUG = True
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 

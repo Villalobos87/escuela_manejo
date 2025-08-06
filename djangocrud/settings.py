@@ -84,15 +84,18 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost,escuela-manejo.o
 
 import dj_database_url
 
-print("DATABASE_URL:", os.environ.get('DATABASE_URL'))
 
 DATABASES = {
-    'default': dj_database_url.parse(
-        os.environ.get('DATABASE_URL'),
-        conn_max_age=600,
-        ssl_require=True  # puedes quitar esto si no usas SSL
-    )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'tasksdb',
+        'USER': 'postgres',
+        'PASSWORD': '12345678*Jmvp',
+        'HOST': 'localhost',
+        'PORT':'5432',
+    }
 }
+
 
 
 # Password validation

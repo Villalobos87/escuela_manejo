@@ -5,6 +5,7 @@ from django.contrib import messages
 from .models import Task, Instructor
 from django.http import JsonResponse
 from django.db.models import Q
+from django.db.models import Max
 
 def list_tasks(request):
     tasks = Task.objects.all().order_by('-id')
@@ -118,63 +119,57 @@ def update_task(request, task_id):
         'instructores': instructores
     })
 
-def calendario_clases(request):
-    tareas = Task.objects.all().order_by('fecha_inicio', 'hora')
-    return render(request, 'calendario.html', {'tareas': tareas})
-
 def api_clases(request):
-    tareas = Task.objects.all()
-    eventos = []
+    tareas = (
+        Task.objects
+        .values('instructor', 'hora', 'fecha_fin')
+        .order_by('instructor', 'hora')
+    )
 
+    eventos = []
     for tarea in tareas:
-        eventos.append({
-            'title': f"{tarea.title} ({tarea.instructor})",
-            'start': tarea.fecha_inicio.isoformat() if tarea.fecha_inicio else None,
-            'end': tarea.fecha_fin.isoformat() if tarea.fecha_fin else None,
-        })
+        fecha_ajustada = ajustar_fecha(tarea['fecha_fin'])
+        if fecha_ajustada:
+            # Combina fecha ajustada + hora (asumiendo que hora es tipo time)
+            fecha_hora = datetime.combine(fecha_ajustada, tarea['hora'])
+            eventos.append({
+                'title': f"{tarea['instructor']}",
+                'start': fecha_hora.isoformat(),
+                'allDay': False,  # importante para mostrar hora
+            })
 
     return JsonResponse(eventos, safe=False)
 
-def reporte_horario_siguiente(request):
-    ultima_tarea = Task.objects.order_by('-fecha_fin').first()
-    if not ultima_tarea:
-        return render(request, 'reporte_horarios.html', {'error': 'No hay tareas registradas.'})
 
-    # 1. Fecha objetivo (día siguiente a la última fecha_fin, sin sábados ni domingos)
-    fecha_objetivo = ultima_tarea.fecha_fin + timedelta(days=1)
-    while fecha_objetivo.weekday() in [5, 6]:
-        fecha_objetivo += timedelta(days=1)
+def ajustar_fecha(fecha):
+    dia_original = fecha.weekday()  # lunes=0, ..., domingo=6
 
-    # 2. Horarios posibles
-    hora_inicio = datetime.strptime("07:30", "%H:%M")
-    hora_fin = datetime.strptime("17:30", "%H:%M")
-    intervalo = timedelta(hours=1, minutes=30)
+    if dia_original == 4:  # viernes
+        # mover directamente al lunes siguiente
+        return fecha + timedelta(days=3)
+    elif dia_original == 5:  # sábado
+        # mover al sábado siguiente
+        return fecha + timedelta(days=7)
+    else:
+        # cualquier otro día: sumar 1 día
+        return fecha + timedelta(days=1)
 
-    horas_posibles = []
-    hora_actual = hora_inicio
-    while hora_actual <= hora_fin:
-        if hora_actual.time() != time(12, 0):
-            horas_posibles.append(hora_actual.time())
-        hora_actual += intervalo
-
-    # 3. Obtener tareas que estén activas ese día
-    tareas_activas = Task.objects.filter(
-        Q(fecha_inicio__lte=fecha_objetivo) & Q(fecha_fin__gte=fecha_objetivo)
+def informe_ultimas_fechas(request):
+    resultados = (
+        Task.objects
+        .values('instructor', 'hora')
+        .annotate(ultima_fecha=Max('fecha_fin'))
+        .order_by('instructor', 'hora')
     )
 
-    # 4. Horas ocupadas en esa fecha
-    horas_ocupadas = set()
-    for tarea in tareas_activas:
-        if tarea.hora:
-            horas_ocupadas.add(tarea.hora)
+    # Ajustar fechas
+    resultados_ajustados = []
+    for r in resultados:
+        fecha_original = r['ultima_fecha']
+        if fecha_original:
+            r['fecha_ajustada'] = ajustar_fecha(fecha_original)
+        else:
+            r['fecha_ajustada'] = None
+        resultados_ajustados.append(r)
 
-    # 5. Filtrar horas libres
-    horas_libres = [h for h in horas_posibles if h not in horas_ocupadas]
-
-    reporte = [{
-        'fecha': fecha_objetivo.strftime('%Y-%m-%d'),
-        'hora': h.strftime('%H:%M'),
-        'estado': 'Libre'
-    } for h in horas_libres]
-
-    return render(request, 'reporte_horarios.html', {'reporte': reporte})
+    return render(request, 'tasks/informe_ultimas_fechas.html', {'resultados': resultados_ajustados})

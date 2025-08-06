@@ -18,6 +18,10 @@
         📅 Ver Calendario
     </a>
 
+    <a href="{% url 'informe_ultimas_fechas' %}" class="btn btn-outline-success btn-sm mb-3 ms-2" style="font-size: 0.8rem;">
+    📋 Ver Disponibilidad
+</a>
+
     <form action="{% url 'create_task' %}" method="POST" class="card p-4 shadow-lg bg-dark text-white rounded-4 mb-4">
         {% csrf_token %}
         <h4 class="mb-4 text-center">Escuela de Manejo Ucc León</h4>
